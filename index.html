@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Cricket Score</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .scoreboard-container {
+      background-color: black;
+      padding: 20px;
+      max-width: 600px;
+      margin: 20px auto;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      color: white;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      background-color: #333;
+      padding: 10px;
+      color: #fff;
+    }
+
+    nav a, nav button {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .teams, .score, .overs, .commentary, .scorecard, .bowler-info {
+      margin: 10px 0;
+    }
+
+    .scorecard table, .bowler-info table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .scorecard td, 
+     .bowler-info td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+      color: white;
+      
+    }
+    .scorecard th{
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+      color: black
+    }
+    .bowler-info th{
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+      color: black
+    }
+
+    .scorecard th {
+      background-color: lightblue;
+    }
+
+    .bowler-info th {
+      background-color: lightgreen;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html" class="active">Live Score</a>
+      <a href="admin.html">Admin Panel</a>
+      <button onclick="checkLogin()">Login</button>
+    </nav>
+
+    <div id="scoreboard" class="scoreboard-container">
+      <div class="header">
+        <h2>Live Cricket Score</h2>
+      </div>
+      <div class="teams">
+        <span id="team-a">TEAM A</span> vs <span id="team-b">TEAM B</span>
+      </div>
+      <div class="score">
+        <span id="batting-team" class="batting-team">BATTING</span>
+        <span id="runs-wickets" class="runs-wickets">0 / 0</span>
+      </div>
+      <div class="overs">
+        Overs: <span id="overs">0.0</span>
+      </div>
+
+      <div class="scorecard">
+        <h4>Batting Scorecard</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Runs</th>
+              <th>Balls</th>
+              <th>Strike Rate</th>
+            </tr>
+          </thead>
+          <tbody id="player-scores">
+            <tr><td colspan="4">Loading players...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bowler-info">
+        <h4>Bowler Stats</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Bowler</th>
+              <th>Overs</th>
+              <th>Wickets</th>
+            </tr>
+          </thead>
+          <tbody id="bowler-stats">
+            <tr><td colspan="3">Loading bowlers...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="commentary">
+        <p><strong>Recent:</strong> <span id="commentary-text">Loading...</span></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const BACKEND_URL = 'http://localhost:3002';
+
+    const teamAName = document.getElementById('team-a');
+    const teamBName = document.getElementById('team-b');
+    const battingTeam = document.getElementById('batting-team');
+    const runsWickets = document.getElementById('runs-wickets');
+    const overs = document.getElementById('overs');
+    const commentaryText = document.getElementById('commentary-text');
+    const playerScores = document.getElementById('player-scores');
+    const bowlerStats = document.getElementById('bowler-stats');
+
+    function checkLogin() {
+      window.location.href = 'login.html';
+    }
+
+    function updateScoreboard(data) {
+      teamAName.textContent = data.teamA;
+      teamBName.textContent = data.teamB;
+      battingTeam.textContent = data.battingTeam;
+      runsWickets.textContent = `${data.runs} / ${data.wickets}`;
+      overs.textContent = `${data.overs}.${data.balls}`;
+      commentaryText.textContent = data.commentary;
+
+      if (data.players && data.players.length > 0) {
+        playerScores.innerHTML = '';
+        data.players.forEach(player => {
+          const row = document.createElement('tr');
+          const strikeRate = player.balls > 0 ? ((player.runs / player.balls) * 100).toFixed(2) : "0.00";
+          row.innerHTML = `
+            <td>${player.name}${player.striker ? ' *' : ''}</td>
+            <td>${player.runs}</td>
+            <td>${player.balls}</td>
+            <td>${strikeRate}</td>
+          `;
+          playerScores.appendChild(row);
+        });
+      } else {
+        playerScores.innerHTML = '<tr><td colspan="4">No players yet</td></tr>';
+      }
+
+      if (data.bowlers && data.bowlers.length > 0) {
+        bowlerStats.innerHTML = '';
+        data.bowlers.forEach(bowler => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${bowler.name}</td>
+            <td>${bowler.overs}</td>
+            <td>${bowler.wickets}</td>
+          `;
+          bowlerStats.appendChild(row);
+        });
+      } else {
+        bowlerStats.innerHTML = '<tr><td colspan="3">No bowlers yet</td></tr>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch(`${BACKEND_URL}/api/score`)
+        .then(res => res.json())
+        .then(data => updateScoreboard(data))
+        .catch(err => {
+          console.error('Initial fetch failed:', err);
+          commentaryText.textContent = 'Error loading score.';
+        });
+
+      const socket = io(BACKEND_URL);
+      socket.on('score_update', (data) => {
+        updateScoreboard(data);
+      });
+    });
+  </script>
+</body>
+</html>

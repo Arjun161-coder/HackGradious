@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: url('crick.jpeg') no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 50px auto;
+      background-color: rgba(0, 0, 0, 0.75);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+
+    nav {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 15px;
+      font-weight: bold;
+      font-size: 18px;
+      padding: 8px 16px;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+
+    nav a:hover,
+    nav a.active {
+      background-color: #00bcd4;
+    }
+
+    .admin-panel h2 {
+      text-align: center;
+      color: #00e676;
+      margin-bottom: 25px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-size: 16px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="password"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      background-color: #f1f1f1;
+      color: #000;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 8px;
+      transform: scale(1.2);
+    }
+
+    button {
+      padding: 12px;
+      font-size: 16px;
+      background-color: #00e676;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #00c853;
+    }
+
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+      color: #ffd700;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin-top: 25px;
+      margin-bottom: 10px;
+      color: #00bcd4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">Live Score</a>
+      <a href="admin.html" class="active">Admin Panel</a>
+    </nav>
+    <div class="admin-panel">
+      <h2>Admin Score Update</h2>
+      <form id="admin-form">
+        <div class="form-group">
+          <label>Runs</label>
+          <input type="number" name="runs" />
+        </div>
+        <div class="form-group">
+          <label>Wickets</label>
+          <input type="number" name="wickets" />
+        </div>
+        <div class="form-group">
+          <label>Overs</label>
+          <input type="number" name="overs" />
+        </div>
+        <div class="form-group">
+          <label>Balls</label>
+          <input type="number" name="balls" />
+        </div>
+        <div class="form-group">
+          <label>Commentary</label>
+          <input type="text" name="commentary" />
+        </div>
+
+        <div class="section-title">Batsman 1</div>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" name="batsman1Name" />
+        </div>
+        <div class="form-group">
+          <label>Runs</label>
+          <input type="number" name="batsman1Runs" />
+        </div>
+        <div class="form-group">
+          <label>Balls</label>
+          <input type="number" name="batsman1Balls" />
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" name="batsman1Striker" /> Is Striker</label>
+        </div>
+
+        <div class="section-title">Batsman 2</div>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" name="batsman2Name" />
+        </div>
+        <div class="form-group">
+          <label>Runs</label>
+          <input type="number" name="batsman2Runs" />
+        </div>
+        <div class="form-group">
+          <label>Balls</label>
+          <input type="number" name="batsman2Balls" />
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" name="batsman2Striker" /> Is Striker</label>
+        </div>
+
+        <div class="section-title">Bowler</div>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" name="bowlerName" />
+        </div>
+        <div class="form-group">
+          <label>Overs</label>
+          <input type="number" name="bowlerOvers" step="0.1" />
+        </div>
+        <div class="form-group">
+          <label>Wickets</label>
+          <input type="number" name="bowlerWickets" />
+        </div>
+
+        <div class="form-group">
+          <label>Admin Password</label>
+          <input type="password" name="password" required />
+        </div>
+
+        <button type="submit">Update Score</button>
+        <p id="message" class="message"></p>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('admin-form');
+    const message = document.getElementById('message');
+    const BACKEND_URL = 'http://localhost:3002';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      if (formData.get("password") !== "admin123") {
+        message.textContent = "Invalid password!";
+        return;
+      }
+
+      const players = [
+        {
+          name: formData.get("batsman1Name"),
+          runs: parseInt(formData.get("batsman1Runs")),
+          balls: parseInt(formData.get("batsman1Balls")),
+          striker: formData.get("batsman1Striker") === "on"
+        },
+        {
+          name: formData.get("batsman2Name"),
+          runs: parseInt(formData.get("batsman2Runs")),
+          balls: parseInt(formData.get("batsman2Balls")),
+          striker: formData.get("batsman2Striker") === "on"
+        }
+      ];
+
+      const bowlers = [
+        {
+          name: formData.get("bowlerName"),
+          overs: parseFloat(formData.get("bowlerOvers")),
+          wickets: parseInt(formData.get("bowlerWickets"))
+        }
+      ];
+
+      const updateData = {
+        runs: parseInt(formData.get("runs")),
+        wickets: parseInt(formData.get("wickets")),
+        overs: parseInt(formData.get("overs")),
+        balls: parseInt(formData.get("balls")),
+        commentary: formData.get("commentary"),
+        players,
+        bowlers
+      };
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/score`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updateData)
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          message.textContent = "Score updated successfully!";
+          form.reset();
+        } else {
+          message.textContent = "Failed to update score.";
+        }
+      } catch (err) {
+        console.error(err);
+        message.textContent = "Server error.";
+      }
+    });
+  </script>
+</body>
+</html>
